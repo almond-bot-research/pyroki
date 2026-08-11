@@ -3,9 +3,12 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "pyroki"
-version = "0.0.0"
-description = "Python Robot Kinematics Library"
+# Almond's fork of https://github.com/chungmin99/pyroki, published to PyPI as
+# `almond-pyroki` (upstream has no PyPI release). The import name stays
+# `pyroki`.
+name = "almond-pyroki"
+version = "0.1.0"
+description = "Almond's fork of PyRoki: Python robot kinematics library. Installs the `pyroki` module."
 readme = "README.md"
 license = { text="MIT" }
 requires-python = ">=3.10"
@@ -26,7 +29,11 @@ dependencies = [
     "jaxtyping",
     "loguru",
     "robot_descriptions",
-    "jaxls @ git+https://github.com/brentyi/jaxls.git",
+    # Upstream depends on `jaxls @ git+https://github.com/brentyi/jaxls.git`;
+    # PyPI rejects git references, so we depend on Almond's PyPI-published
+    # jaxls fork (same import name, pinned to the rev this fork is tested
+    # against).
+    "almond-jaxls>=0.1.0",
     "yourdfpy",
     "trimesh",
     "viser",

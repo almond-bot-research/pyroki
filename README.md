@@ -1,5 +1,16 @@
 # `PyRoki`: Python Robot Kinematics Library
 
+> [!NOTE]
+> This is [Almond Bot](https://almond.bot)'s fork of
+> [chungmin99/pyroki](https://github.com/chungmin99/pyroki), published to PyPI
+> as [`almond-pyroki`](https://pypi.org/project/almond-pyroki/) because
+> upstream has no PyPI release. It installs the `pyroki` import name, depends
+> on [`almond-jaxls`](https://pypi.org/project/almond-jaxls/) instead of
+> upstream's git-pinned jaxls, and is pinned to the revision the
+> [Almond Axol SDK](https://github.com/almond-bot/axol) is tested against (see
+> the `almond` branch). If upstream publishes an official release, prefer it
+> over this fork.
+
 **[Project page](https://pyroki-toolkit.github.io/) &bull;
 [arXiv](https://arxiv.org/abs/2505.03728)**
 
