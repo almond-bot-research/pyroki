@@ -70,7 +70,17 @@ def closest_segment_to_segment_points(
     a2: Float[Array, "*batch 3"],
     b2: Float[Array, "*batch 3"],
 ) -> Tuple[Float[Array, "*batch 3"], Float[Array, "*batch 3"]]:
-    """Finds the closest points between two line segments [a1, b1] and [a2, b2]."""
+    """Finds the closest points between two line segments [a1, b1] and [a2, b2].
+
+    Ericson, Real-Time Collision Detection, 5.1.9: pick ``s`` on the first
+    segment, derive ``t`` from it, and re-derive ``s`` whenever ``t`` clamps,
+    so the two points always belong to each other. (For parallel segments the
+    previous version projected ``a2`` onto the first segment and ``a1`` onto
+    the second independently: the points did not pair up, and side-by-side
+    antiparallel capsules read their axial offset as extra clearance.)
+    Divisions are guarded so gradients stay finite for degenerate segments.
+    """
+    eps = 1e-9
     d1 = b1 - a1  # Direction vector of segment S1
     d2 = b2 - a2  # Direction vector of segment S2
     r = a1 - a2
@@ -82,32 +92,24 @@ def closest_segment_to_segment_points(
     b = jnp.einsum("...i,...i->...", d1, d2)
     denom = a * e - b * b  # Squared area of the parallelogram defined by d1, d2
 
-    s_num = b * f - c * e
-    t_num = a * f - b * c
-
-    s_parallel = -c / (a + _SAFE_EPS)
-    t_parallel = f / (e + _SAFE_EPS)
-
-    s = jnp.where(denom < _SAFE_EPS, s_parallel, s_num / (denom + _SAFE_EPS))
-    t = jnp.where(denom < _SAFE_EPS, t_parallel, t_num / (denom + _SAFE_EPS))
-
-    s_clamped = jnp.clip(s, 0.0, 1.0)
-    t_clamped = jnp.clip(t, 0.0, 1.0)
-
-    t_recomp = jnp.einsum(
-        "...i,...i->...", d2, (a1 + d1 * s_clamped[..., None]) - a2
-    ) / (e + _SAFE_EPS)
-    t_final = jnp.where(
-        jnp.abs(s - s_clamped) > _SAFE_EPS, jnp.clip(t_recomp, 0.0, 1.0), t_clamped
+    # Non-parallel: the lines' closest point on S1, clamped. Parallel (any
+    # point is as good): start from a1.
+    general = denom > 1e-6 * jnp.maximum(a * e, eps)
+    s = jnp.where(
+        general,
+        jnp.clip((b * f - c * e) / jnp.where(general, denom, 1.0), 0.0, 1.0),
+        0.0,
     )
-
-    s_recomp = jnp.einsum("...i,...i->...", d1, (a2 + d2 * t_final[..., None]) - a1) / (
-        a + _SAFE_EPS
+    # The point on S2's line closest to S1(s); if it falls off S2, clamp it and
+    # recompute s from the clamped end.
+    t = (b * s + f) / jnp.maximum(e, eps)
+    s = jnp.where(
+        t < 0.0,
+        jnp.clip(-c / jnp.maximum(a, eps), 0.0, 1.0),
+        jnp.where(t > 1.0, jnp.clip((b - c) / jnp.maximum(a, eps), 0.0, 1.0), s),
     )
-    s_final = jnp.where(
-        jnp.abs(t - t_final) > _SAFE_EPS, jnp.clip(s_recomp, 0.0, 1.0), s_clamped
-    )
+    t = jnp.clip(t, 0.0, 1.0)
 
-    c1 = a1 + d1 * s_final[..., None]
-    c2 = a2 + d2 * t_final[..., None]
+    c1 = a1 + d1 * s[..., None]
+    c2 = a2 + d2 * t[..., None]
     return c1, c2

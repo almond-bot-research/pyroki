@@ -7,7 +7,7 @@ build-backend = "setuptools.build_meta"
 # `almond-pyroki` (upstream has no PyPI release). The import name stays
 # `pyroki`.
 name = "almond-pyroki"
-version = "0.1.0"
+version = "0.1.1"
 description = "Almond's fork of PyRoki: Python robot kinematics library. Installs the `pyroki` module."
 readme = "README.md"
 license = { text="MIT" }
